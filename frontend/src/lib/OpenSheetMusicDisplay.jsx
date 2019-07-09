@@ -8,6 +8,7 @@ class OpenSheetMusicDisplay extends Component {
         this.osmd = undefined;
         this.divRef = React.createRef();
 
+        this.pause = false;
         this.lengthsLast = [];
     }
 
@@ -19,7 +20,7 @@ class OpenSheetMusicDisplay extends Component {
         this.osmd = new OSMD(this.divRef.current, options);
         this.osmd.load(this.props.file).then(() => {
             this.osmd.render();
-            // this.play();
+            this.play();
         });
     }
 
@@ -29,12 +30,8 @@ class OpenSheetMusicDisplay extends Component {
         } else {
             this.osmd.load(this.props.file).then(() => {
                 this.osmd.render();
-                // this.play();
+                this.play();
             });
-        }
-
-        if(this.props.play){
-            this.play();
         }
     }
 
@@ -66,11 +63,19 @@ class OpenSheetMusicDisplay extends Component {
     getTimeout() {
         return new Promise(
             (resolve, reject) => {
+                if(this.osmd.cursor.Iterator.endReached){
+                    this.osmd.cursor.reset();
+                    this.osmd.cursor.hide();
+                    reject("end reached");
+                }else if(this.pause){
+                    reject("paused");
+                }
+
                 const lengths = this.getNotesUnderCursor().map((note) => note.length).concat(this.lengthsLast);
                 const lengthShortest = lengths.reduce((prev, curr) => prev.lt(curr) ? prev : curr);
                 this.lengthsLast = lengths.filter((length) => length > lengthShortest);
                 this.lengthsLast = this.lengthsLast.map((length) => Fraction.minus(length, lengthShortest));
-                const wholeNoteTime = 3000;
+                const wholeNoteTime = 300;
                 const timeout = lengthShortest.realValue * wholeNoteTime;
                 resolve(timeout);
             }
@@ -86,13 +91,22 @@ class OpenSheetMusicDisplay extends Component {
                     this.cursorRNext(timeout);
                 }, timeout);
             }
+        ).catch(
+            (reason) => {
+                console.log(reason);
+            }
         )
     }
 
     play(startTime, bpm) {
-        let cursor = this.osmd.cursor;
-        cursor.show();
+        this.pause = false;
+
+        this.osmd.cursor.show();
         this.cursorRNext();
+    }
+
+    pause() {
+        this.pause = true;
     }
 }
 
