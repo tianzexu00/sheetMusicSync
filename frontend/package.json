@@ -31,7 +31,8 @@
   "dependencies": {
     "axios": "^0.19.0",
     "opensheetmusicdisplay": "^0.7.0",
-    "react-dropzone": "^10.1.5"
+    "react-dropzone": "^10.1.5",
+    "react-player-controls": "^1.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

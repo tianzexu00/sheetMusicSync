@@ -1,3 +1,5 @@
+import Controls from '../components/controls/controls'
+
 import React, { Component } from 'react';
 import { OpenSheetMusicDisplay as OSMD, Fraction } from 'opensheetmusicdisplay';
 
@@ -8,7 +10,7 @@ class OpenSheetMusicDisplay extends Component {
         this.osmd = undefined;
         this.divRef = React.createRef();
 
-        this.pause = false;
+        this.paused = false;
         this.lengthsLast = [];
     }
 
@@ -41,7 +43,12 @@ class OpenSheetMusicDisplay extends Component {
     }
 
     render() {
-        return (<div ref={this.divRef} />);
+        return (
+            <div>
+                <Controls play={this.play.bind(this)} pause={this.pause.bind(this)} ></Controls>
+                <div ref={this.divRef} />
+            </div>
+        );
     }
 
 
@@ -67,7 +74,7 @@ class OpenSheetMusicDisplay extends Component {
                     this.osmd.cursor.reset();
                     this.osmd.cursor.hide();
                     reject("end reached");
-                }else if(this.pause){
+                }else if(this.paused){
                     reject("paused");
                 }
 
@@ -99,14 +106,14 @@ class OpenSheetMusicDisplay extends Component {
     }
 
     play(startTime, bpm) {
-        this.pause = false;
+        this.paused = false;
 
         this.osmd.cursor.show();
         this.cursorRNext();
     }
 
     pause() {
-        this.pause = true;
+        this.paused = true;
     }
 }
 
