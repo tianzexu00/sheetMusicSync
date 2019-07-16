@@ -25,7 +25,7 @@ def getSync(path):
     })
 
 UPLOAD_FOLDER = 'uploads/'
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp3'])
+ALLOWED_EXTENSIONS = set(['xml', 'mp3'])
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -33,8 +33,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/uploadBT', methods=['GET', 'POST'])
-def upload_file():
+@app.route('/upload/<type>', methods=['GET', 'POST'])
+def upload_file(type):
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -48,10 +48,11 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            # return redirect(url_for('uploaded_file',
-                                    # filename=filename))
-            return getSync(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            if type == 'sheetmusic':
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'sheetmusic', filename))
+            elif type == 'backtrack':
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'backtrack', filename))
+                return getSync(os.path.join(app.config['UPLOAD_FOLDER'], 'backtrack', filename))
     return '''
     <!doctype html>
     <title>Upload new File</title>

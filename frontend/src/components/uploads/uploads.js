@@ -25,11 +25,11 @@ class Uploads extends Component {
     }
 
     handleSM(file){
-        
+        this.upload(file, 'http://127.0.0.1:5000/upload/sheetmusic');
     }
 
     handleBT(file){
-        this.upload(file, 'http://127.0.0.1:5000/uploadBT');
+        this.upload(file, 'http://127.0.0.1:5000/upload/backtrack');
     }
 
     render() {
