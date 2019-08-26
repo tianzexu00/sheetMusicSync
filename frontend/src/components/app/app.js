@@ -1,6 +1,7 @@
 import './app.css';
 import OpenSheetMusicDisplay from '../../lib/OpenSheetMusicDisplay';
-import Uploads from '../uploads/uploads';
+import Dropzone from 'react-dropzone';
+import axios from 'axios';
 
 import React, { Component } from 'react';
 
@@ -8,26 +9,77 @@ class App extends Component {
     constructor(props) {
         super(props);
         // Don't call this.setState() here!
-        this.state = { file: "MuzioClementi_SonatinaOpus36No1_Part2.xml"};
+        this.state = {file: "MuzioClementi_SonatinaOpus36No1_Part2.xml"};
 
+        this.startTime = 0;
+        this.wholeNoteTime = 2000;
     }
 
-    handleClick(event) {
-        const file = event.target.value;
-        this.setState(state => state.file = file);
+    upload(file, path) {
+        let formData = new FormData();
+        formData.append("file", file);
+        return axios.post(path, formData, {
+            headers: {
+            'Content-Type': 'multipart/form-data'
+            }
+        })
+    }
+
+    handleSM(file){
+        this.setState(state => state.file = file.path);
+
+        this.upload(file, 'http://127.0.0.1:5000/upload/sheetmusic').then(
+            (response) => {
+                this.keySigLower = response.data.keySigLower
+                console.log(response);
+            }
+        ).catch(
+            (reason) => {
+                console.log(reason);
+            }
+        );
+    }
+
+    handleBT(file){
+        this.upload(file, 'http://127.0.0.1:5000/upload/backtrack').then(
+            (response) => {
+                this.startTime = response.data.startTime;
+                this.wholeNoteTime = 60000 / response.data.bpm * this.keySigLower;
+                console.log(response);
+            }
+        ).catch(
+            (reason) => {
+                console.log(reason);
+            }
+        );
     }
 
     render() {
         return (
             <div className="App">
-                <Uploads></Uploads>
+                <Dropzone onDrop={acceptedFiles => this.handleSM(acceptedFiles[0])}>
+                    {({ getRootProps, getInputProps }) => (
+                        <section>
+                            <div {...getRootProps()}>
+                                <input {...getInputProps()} />
+                                <p>SHEET MUSIC</p>
+                            </div>
+                        </section>
+                    )}
+                </Dropzone>
 
-                <select onChange={this.handleClick.bind(this)}>
-                    <option value="MuzioClementi_SonatinaOpus36No1_Part2.xml">Muzio Clementi: Sonatina Opus 36 No1 Part2</option>
-                    <option value="Beethoven_AnDieFerneGeliebte.xml">Beethoven: An Die FerneGeliebte</option>
-                    <option value="koko_piano.xml">Kyousougiga: Koko</option>
-                </select>
-                <OpenSheetMusicDisplay file={this.state.file} />
+                <Dropzone onDrop={acceptedFiles => this.handleBT(acceptedFiles[0])}>
+                    {({ getRootProps, getInputProps }) => (
+                        <section>
+                            <div {...getRootProps()}>
+                                <input {...getInputProps()} />
+                                <p>BACKING TRACK</p>
+                            </div>
+                        </section>
+                    )}
+                </Dropzone>
+
+                <OpenSheetMusicDisplay file={this.state.file} startTime={this.startTime} wholeNoteTime={this.wholeNoteTime} />
             </div>
         );
     }

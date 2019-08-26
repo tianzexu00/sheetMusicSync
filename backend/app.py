@@ -1,4 +1,5 @@
 import numpy as np
+from music21 import *
 import librosa
 
 from flask import Flask
@@ -6,13 +7,12 @@ from flask import jsonify
 from flask_cors import CORS
 
 import os
-from flask import Flask, flash, request, redirect, url_for
+from flask import flash, request, redirect
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/getSync')
 def getSync(path):
     y, sr = librosa.load(path)
     onset_env = librosa.onset.onset_strength(y, sr=sr, aggregate=np.median)
@@ -20,8 +20,8 @@ def getSync(path):
     beatsTime = librosa.frames_to_time(beats, sr=sr)
 
     return jsonify({
-        "tempo": tempo,
-        "firstBeat": beatsTime[0]
+        "bpm": tempo,
+        "startTime": beatsTime[0]
     })
 
 UPLOAD_FOLDER = 'uploads/'
@@ -49,23 +49,11 @@ def upload_file(type):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             if type == 'sheetmusic':
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'sheetmusic', filename))
+                path = os.path.join(app.config['UPLOAD_FOLDER'], 'sheetmusic', filename)
+                file.save(path)
+                s = converter.parseFile(path)
+                return jsonify({"keySigLower": s.getTimeSignatures()[0].denominator})
             elif type == 'backtrack':
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'backtrack', filename))
-                return getSync(os.path.join(app.config['UPLOAD_FOLDER'], 'backtrack', filename))
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    '''
-
-from flask import send_from_directory
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               filename)
+                path = os.path.join(app.config['UPLOAD_FOLDER'], 'backtrack', filename)
+                file.save(path)
+                return getSync(path)
