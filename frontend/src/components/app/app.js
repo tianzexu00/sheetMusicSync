@@ -10,9 +10,6 @@ class App extends Component {
         super(props);
         // Don't call this.setState() here!
         this.state = {file: "MuzioClementi_SonatinaOpus36No1_Part2.xml"};
-
-        this.startTime = 0;
-        this.wholeNoteTime = 2000;
     }
 
     upload(file, path) {
@@ -41,10 +38,14 @@ class App extends Component {
     }
 
     handleBT(file){
+        this.setState(state => state.song = file.path);
+
         this.upload(file, 'http://127.0.0.1:5000/upload/backtrack').then(
             (response) => {
-                this.startTime = response.data.startTime;
-                this.wholeNoteTime = 60000 / response.data.bpm * this.keySigLower;
+                this.setState({
+                    startTime: 1000 * response.data.startTime,
+                    wholeNoteTime: 60000 / response.data.bpm * this.keySigLower
+                });
                 console.log(response);
             }
         ).catch(
@@ -79,7 +80,7 @@ class App extends Component {
                     )}
                 </Dropzone>
 
-                <OpenSheetMusicDisplay file={this.state.file} startTime={this.startTime} wholeNoteTime={this.wholeNoteTime} />
+                <OpenSheetMusicDisplay file={this.state.file} song={this.state.song} startTime={this.state.startTime} wholeNoteTime={this.state.wholeNoteTime} />
             </div>
         );
     }

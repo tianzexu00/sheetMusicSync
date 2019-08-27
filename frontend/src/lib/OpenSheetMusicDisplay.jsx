@@ -10,8 +10,7 @@ class OpenSheetMusicDisplay extends Component {
         this.osmd = undefined;
         this.divRef = React.createRef();
 
-        this.startTime = this.props.startTime;
-        this.wholeNoteTime = this.props.wholeNoteTime;
+        this.first = true;
         this.paused = false;
         this.lengthsLast = [];
     }
@@ -71,6 +70,7 @@ class OpenSheetMusicDisplay extends Component {
         return new Promise(
             (resolve, reject) => {
                 if(this.osmd.cursor.Iterator.endReached){
+                    this.first = true;
                     this.osmd.cursor.reset();
                     this.osmd.cursor.hide();
                     reject("end reached");
@@ -82,8 +82,7 @@ class OpenSheetMusicDisplay extends Component {
                 const lengthShortest = lengths.reduce((prev, curr) => prev.lt(curr) ? prev : curr);
                 this.lengthsLast = lengths.filter((length) => length > lengthShortest);
                 this.lengthsLast = this.lengthsLast.map((length) => Fraction.minus(length, lengthShortest));
-                console.log(this.wholeNoteTime);
-                const timeout = lengthShortest.realValue * this.wholeNoteTime;
+                const timeout = lengthShortest.realValue * this.props.wholeNoteTime;
                 resolve(timeout);
             }
         )
@@ -109,11 +108,22 @@ class OpenSheetMusicDisplay extends Component {
         this.paused = false;
 
         this.osmd.cursor.show();
-        this.cursorRNext();
+        if(this.first){
+            setTimeout(this.cursorRNext.bind(this), this.props.startTime);
+            this.true = false;
+        }else{
+            this.cursorRNext();
+        }
+
+        if(typeof this.audio === 'undefined'){
+            this.audio = new Audio(this.props.song);
+        }
+        this.audio.play();
     }
 
     pause() {
         this.paused = true;
+        this.audio.pause();
     }
 }
 
